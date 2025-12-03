@@ -2,7 +2,6 @@
 /**
  * Environment Configuration Loader
  */
-
 class Env {
     private static $variables = [];
     private static $loaded = false;
@@ -84,31 +83,40 @@ class Env {
     }
     
     public static function getRemoteServers($type = 'plans') {
-      $servers = [];
-      $serverCount = 1;
-      
-      while (true) {
-          $host = self::get("REMOTE_SERVER_{$serverCount}_HOST");
-          if (!$host) {
-              break;
-          }
-          
-          if ($type === 'blog') {
-              $path = self::get("REMOTE_SERVER_{$serverCount}_BLOG_PATH");
-          } else {
-              $path = self::get("REMOTE_SERVER_{$serverCount}_PATH");
-          }
-          
-          $servers[] = [
-              'host' => $host,
-              'user' => self::get("REMOTE_SERVER_{$serverCount}_USER"),
-              'pass' => self::get("REMOTE_SERVER_{$serverCount}_PASS"),
-              'path' => $path
-          ];
-          
-          $serverCount++;
-      }
-      
-      return $servers;
-  }
+        $servers = [];
+        $serverCount = 1;
+        
+        while (true) {
+            $host = self::get("REMOTE_SERVER_{$serverCount}_HOST");
+            if (!$host) {
+                break;
+            }
+            
+            if ($type === 'blog') {
+                $path = self::get("REMOTE_SERVER_{$serverCount}_BLOG_PATH");
+            } else {
+                $path = self::get("REMOTE_SERVER_{$serverCount}_PATH");
+            }
+            
+            $servers[] = [
+                'host' => $host,
+                'user' => self::get("REMOTE_SERVER_{$serverCount}_USER"),
+                'pass' => self::get("REMOTE_SERVER_{$serverCount}_PASS"),
+                'path' => $path
+            ];
+            
+            $serverCount++;
+        }
+        
+        return $servers;
+    }
+    
+    public static function hasLocalStorage() {
+        return !empty(self::get('LOCAL_STORAGE_ENABLED')) && 
+               self::get('LOCAL_STORAGE_ENABLED') === 'true';
+    }
+    
+    public static function getLocalStoragePath() {
+        return self::get('LOCAL_STORAGE_PATH', '/var/www/storage/');
+    }
 }

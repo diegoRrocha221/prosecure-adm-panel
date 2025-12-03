@@ -45,6 +45,14 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             </li>
             
             <li class="nav-item">
+                <a class="nav-link <?php echo $currentPage === 'sysadmin.php' ? 'active' : ''; ?>" 
+                   href="sysadmin.php" data-page="sysadmin">
+                    <i class="fas fa-server"></i>
+                    System Admin
+                </a>
+            </li>
+            
+            <li class="nav-item">
                 <a class="nav-link <?php echo in_array($currentPage, ['discount_settings.php', 'blog_filter_settings.php', 'display_settings.php']) ? 'active' : ''; ?>" 
                    href="#settingsSubmenu" data-bs-toggle="collapse" 
                    aria-expanded="<?php echo in_array($currentPage, ['discount_settings.php', 'blog_filter_settings.php', 'display_settings.php']) ? 'true' : 'false'; ?>">
