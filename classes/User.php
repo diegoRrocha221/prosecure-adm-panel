@@ -190,4 +190,76 @@ class User {
             return ['success' => false, 'message' => 'Error updating master account: ' . $e->getMessage()];
         }
     }
+    
+    public function getUsernamesFromPurchasedPlans($purchasedPlansJson) {
+        if (empty($purchasedPlansJson)) {
+            return [];
+        }
+        
+        $plans = json_decode($purchasedPlansJson, true);
+        if (!is_array($plans)) {
+            return [];
+        }
+        
+        $usernames = [];
+        foreach ($plans as $plan) {
+            if (isset($plan['username']) && $plan['username'] !== 'none' && !empty($plan['username'])) {
+                $usernames[] = $plan['username'];
+            }
+            if (isset($plan['email']) && $plan['email'] !== 'none' && !empty($plan['email'])) {
+                $usernames[] = $plan['email'];
+            }
+        }
+        
+        return array_unique($usernames);
+    }
+    
+    public function getActiveConnections($masterReference) {
+        $masterAccount = $this->getMasterAccountByReference($masterReference);
+        if (!$masterAccount) {
+            throw new Exception('Master account not found');
+        }
+        
+        // Get all users from master account (including master user itself)
+        $sql = "SELECT username, email FROM users WHERE master_reference = ?";
+        $users = $this->db->fetchAll($sql, [$masterReference]);
+        
+        $usernames = [];
+        foreach ($users as $user) {
+            if (!empty($user['username'])) {
+                $usernames[] = $user['username'];
+            }
+            if (!empty($user['email'])) {
+                $usernames[] = $user['email'];
+            }
+        }
+        
+        // Also get usernames from purchased_plans
+        if (!empty($masterAccount['purchased_plans'])) {
+            $planUsernames = $this->getUsernamesFromPurchasedPlans($masterAccount['purchased_plans']);
+            $usernames = array_merge($usernames, $planUsernames);
+        }
+        
+        $usernames = array_values(array_unique($usernames)); // Reindex array
+        
+        if (empty($usernames)) {
+            return [];
+        }
+        
+        try {
+            $radiusDb = new Database(true);
+            
+            $placeholders = str_repeat('?,', count($usernames) - 1) . '?';
+            $sql = "SELECT username, acctstarttime, costumerip, nasipaddress, acctsessiontime
+                    FROM radacct 
+                    WHERE acctstoptime IS NULL 
+                    AND username IN ($placeholders)
+                    ORDER BY acctstarttime DESC";
+            
+            return $radiusDb->fetchAll($sql, $usernames);
+        } catch (Exception $e) {
+            error_log("Error fetching active connections from RADIUS: " . $e->getMessage());
+            throw new Exception('Error connecting to RADIUS database: ' . $e->getMessage());
+        }
+    }
 }

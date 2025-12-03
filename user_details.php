@@ -454,6 +454,27 @@ if ($user['is_master'] == 1) {
                             </div>
                         </div>
                         
+                        <!-- Active Connections -->
+                        <div class="row">
+                            <div class="col-md-12 mb-4">
+                                <div class="card">
+                                    <div class="card-header bg-success text-white">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-wifi me-2"></i>Active Connections
+                                            <span class="badge bg-light text-success ms-2" id="active-count">0</span>
+                                            <small class="float-end" id="last-update" style="font-size: 0.8rem;"></small>
+                                        </h5>
+                                    </div>
+                                    <div class="card-body" id="active-connections-container">
+                                        <div class="text-center py-3">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <!-- Child Users -->
                         <div class="row">
                             <div class="col-md-12 mb-4">
@@ -625,5 +646,118 @@ if ($user['is_master'] == 1) {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/script.js"></script>
+    // Adicionar no final do user_details.php, antes de </body>
+<script>
+<?php if ($user['is_master'] == 1 && $masterAccount): ?>
+    var masterReference = '<?php echo htmlspecialchars($user['master_reference']); ?>';
+    var refreshInterval;
+    
+    function loadActiveConnections() {
+        $.ajax({
+            url: 'get_active_connections.php',
+            type: 'GET',
+            data: { master_reference: masterReference },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    updateConnectionsTable(response.connections);
+                    $('#active-count').text(response.count);
+                    $('#last-update').text('Last update: ' + new Date(response.timestamp).toLocaleTimeString());
+                } else {
+                    showConnectionError(response.message || 'Error loading connections');
+                }
+            },
+            error: function() {
+                showConnectionError('Failed to fetch active connections');
+            }
+        });
+    }
+    
+    function updateConnectionsTable(connections) {
+        var container = $('#active-connections-container');
+        
+        if (connections.length === 0) {
+            container.html('<div class="alert alert-info mb-0"><i class="fas fa-info-circle me-2"></i>No active connections at this moment.</div>');
+            return;
+        }
+        
+        var html = '<div class="table-responsive">' +
+                   '<table class="table table-hover mb-0">' +
+                   '<thead class="table-light">' +
+                   '<tr>' +
+                   '<th><i class="fas fa-user me-1"></i>Username</th>' +
+                   '<th><i class="fas fa-clock me-1"></i>Connected Since</th>' +
+                   '<th><i class="fas fa-network-wired me-1"></i>Customer IP</th>' +
+                   '<th><i class="fas fa-circle me-1"></i>Status</th>' +
+                   '</tr>' +
+                   '</thead>' +
+                   '<tbody>';
+        
+        connections.forEach(function(conn) {
+            var startTime = new Date(conn.acctstarttime);
+            var duration = formatDuration(conn.acctsessiontime || 0);
+            
+            html += '<tr>' +
+                    '<td><strong>' + escapeHtml(conn.username) + '</strong></td>' +
+                    '<td>' + startTime.toLocaleString() + '</td>' +
+                    '<td><code>' + escapeHtml(conn.costumerip || 'N/A') + '</code></td>' +
+                    '<td><span class="badge bg-success"><i class="fas fa-circle me-1" style="font-size: 0.6rem;"></i>Online</span></td>' +
+                    '</tr>';
+        });
+        
+        html += '</tbody></table></div>';
+        container.html(html);
+    }
+    
+    function showConnectionError(message) {
+        $('#active-connections-container').html(
+            '<div class="alert alert-danger mb-0"><i class="fas fa-exclamation-triangle me-2"></i>' + 
+            escapeHtml(message) + 
+            '</div>'
+        );
+    }
+    
+    function formatDuration(seconds) {
+        if (!seconds || seconds === 0) return '0s';
+        
+        var hours = Math.floor(seconds / 3600);
+        var minutes = Math.floor((seconds % 3600) / 60);
+        var secs = seconds % 60;
+        
+        var parts = [];
+        if (hours > 0) parts.push(hours + 'h');
+        if (minutes > 0) parts.push(minutes + 'm');
+        if (secs > 0 || parts.length === 0) parts.push(secs + 's');
+        
+        return parts.join(' ');
+    }
+    
+    function escapeHtml(text) {
+        var map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+    
+    // Load on page load
+    $(document).ready(function() {
+        loadActiveConnections();
+        
+        // Refresh every 20 seconds
+        refreshInterval = setInterval(loadActiveConnections, 20000);
+    });
+    
+    // Clear interval when leaving page
+    $(window).on('beforeunload', function() {
+        if (refreshInterval) {
+            clearInterval(refreshInterval);
+        }
+    });
+<?php endif; ?>
+</script>
 </body>
 </html>

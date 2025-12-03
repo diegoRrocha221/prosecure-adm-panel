@@ -115,3 +115,10 @@ function alert($message, $type = 'info') {
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>';
 }
+
+function getImageUrl($filename) {
+    if (empty($filename)) {
+        return '';
+    }
+    return IMAGE_BASE_URL . $filename;
+}

@@ -136,3 +136,5 @@ function formatPlanData(planData) {
         return '<div class="alert alert-warning">Invalid plan data</div>';
     }
 }
+
+

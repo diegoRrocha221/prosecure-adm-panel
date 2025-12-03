@@ -6,16 +6,23 @@
 class Database {
     private $conn;
     
-    public function __construct() {
+    public function __construct($useRadius = false) {
         try {
-            $dsn = 'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=' . DB_CHARSET;
-            $options = [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES => false,
-            ];
-            
-            $this->conn = new PDO($dsn, DB_USER, DB_PASS, $options);
+            if ($useRadius) {
+                $dsn = 'mysql:host=' . RADIUS_DB_HOST . ';dbname=' . RADIUS_DB_NAME . ';charset=' . RADIUS_DB_CHARSET;
+                $this->conn = new PDO($dsn, RADIUS_DB_USER, RADIUS_DB_PASS, [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                    PDO::ATTR_EMULATE_PREPARES => false,
+                ]);
+            } else {
+                $dsn = 'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=' . DB_CHARSET;
+                $this->conn = new PDO($dsn, DB_USER, DB_PASS, [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                    PDO::ATTR_EMULATE_PREPARES => false,
+                ]);
+            }
         } catch (PDOException $e) {
             throw new Exception("Connection failed: " . $e->getMessage());
         }

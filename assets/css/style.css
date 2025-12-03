@@ -245,3 +245,68 @@ body {
     content: " *";
     color: var(--danger-color);
 }
+
+.sidebar .nav-link[data-bs-toggle="collapse"] {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.sidebar .collapse .nav-link {
+    padding-left: 2rem;
+    font-size: 0.9rem;
+}
+
+.sidebar .nav-link i.fa-chevron-down {
+    font-size: 0.75rem;
+    transition: transform 0.3s ease;
+}
+
+.sidebar .nav-link[aria-expanded="true"] i.fa-chevron-down {
+    transform: rotate(180deg);
+}
+
+/* Image Preview */
+.image-preview {
+    max-width: 200px;
+    max-height: 200px;
+    margin-top: 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    display: none;
+}
+
+.image-preview.show {
+    display: block;
+}
+
+/* Plan Image Thumbnail */
+.plan-image-thumb {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 0.25rem;
+}
+
+/* Dynamic Rules Container */
+.rules-container {
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+}
+
+.rule-item {
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    position: relative;
+}
+
+.rule-item .btn-remove-rule {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+}
