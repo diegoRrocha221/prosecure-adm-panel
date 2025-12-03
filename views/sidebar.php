@@ -13,6 +13,14 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             </li>
             
             <li class="nav-item">
+                <a class="nav-link <?php echo $currentPage === 'financial.php' ? 'active' : ''; ?>" 
+                   href="financial.php" data-page="financial">
+                    <i class="fas fa-chart-line"></i>
+                    Financial
+                </a>
+            </li>
+            
+            <li class="nav-item">
                 <a class="nav-link <?php echo $currentPage === 'plans.php' ? 'active' : ''; ?>" 
                    href="plans.php" data-page="plans">
                     <i class="fas fa-box"></i>

@@ -1,8 +1,4 @@
 <?php
-/**
- * Authorize.net API Integration - XML Version
- */
-
 class AuthorizeNet {
     private $apiLoginId;
     private $transactionKey;
@@ -10,25 +6,20 @@ class AuthorizeNet {
     private $apiUrl;
     
     public function __construct() {
-        $this->apiLoginId = '493NrkjVw';
-        $this->transactionKey = '5g4C85nNgL8ZzW45';
-        $this->environment = 'production';
+        $this->apiLoginId = Env::get('AUTHORIZENET_API_LOGIN_ID');
+        $this->transactionKey = Env::get('AUTHORIZENET_TRANSACTION_KEY');
+        $this->environment = Env::get('AUTHORIZENET_ENVIRONMENT', 'production');
         
-        // Set API endpoint based on environment
         $this->apiUrl = $this->environment === 'production' 
             ? 'https://api.authorize.net/xml/v1/request.api'
             : 'https://apitest.authorize.net/xml/v1/request.api';
     }
     
-    /**
-     * Get subscription details from Authorize.net
-     */
     public function getSubscriptionDetails($subscriptionId) {
         if (empty($subscriptionId)) {
             return null;
         }
         
-        // Build XML request
         $xml = '<?xml version="1.0" encoding="utf-8"?>
         <ARBGetSubscriptionRequest xmlns="AnetApi/xml/v1/schema/AnetApiSchema.xsd">
             <merchantAuthentication>
@@ -47,9 +38,6 @@ class AuthorizeNet {
         return null;
     }
     
-    /**
-     * Get subscription status
-     */
     public function getSubscriptionStatus($subscriptionId) {
         if (empty($subscriptionId)) {
             return null;
@@ -79,9 +67,6 @@ class AuthorizeNet {
         return null;
     }
     
-    /**
-     * Make XML request to Authorize.net
-     */
     private function makeXmlRequest($xmlData) {
         $ch = curl_init($this->apiUrl);
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: text/xml']);
@@ -106,7 +91,6 @@ class AuthorizeNet {
             return null;
         }
         
-        // Check if response is valid
         if (empty($response)) {
             error_log("Authorize.net Empty Response");
             return null;
@@ -115,12 +99,8 @@ class AuthorizeNet {
         return $response;
     }
     
-    /**
-     * Parse XML subscription response
-     */
     private function parseSubscriptionResponse($xmlResponse) {
         try {
-            // Suppress namespace warnings
             libxml_use_internal_errors(true);
             $xml = simplexml_load_string($xmlResponse);
             libxml_clear_errors();
@@ -130,13 +110,11 @@ class AuthorizeNet {
                 return null;
             }
             
-            // Register namespace if needed
             $namespaces = $xml->getNamespaces(true);
             if (isset($namespaces[''])) {
                 $xml->registerXPathNamespace('ns', $namespaces['']);
             }
             
-            // Check if request was successful
             if (!isset($xml->messages->resultCode) || (string)$xml->messages->resultCode !== 'Ok') {
                 if (isset($xml->messages->message->text)) {
                     error_log("Authorize.net Error: " . (string)$xml->messages->message->text);
@@ -144,7 +122,6 @@ class AuthorizeNet {
                 return null;
             }
             
-            // Check if subscription exists in response
             if (!isset($xml->subscription)) {
                 error_log("No subscription data in response");
                 return null;
@@ -152,7 +129,6 @@ class AuthorizeNet {
             
             $sub = $xml->subscription;
             
-            // Build response array
             $data = [
                 'subscription_id' => isset($sub->subscriptionId) ? (string)$sub->subscriptionId : 'N/A',
                 'name' => isset($sub->name) ? (string)$sub->name : 'N/A',
@@ -176,7 +152,6 @@ class AuthorizeNet {
                 'billing_zip' => 'N/A',
             ];
             
-            // Payment schedule
             if (isset($sub->paymentSchedule)) {
                 if (isset($sub->paymentSchedule->interval->length)) {
                     $data['interval_length'] = (string)$sub->paymentSchedule->interval->length;
@@ -195,7 +170,6 @@ class AuthorizeNet {
                 }
             }
             
-            // Payment info
             if (isset($sub->payment->creditCard)) {
                 if (isset($sub->payment->creditCard->cardNumber)) {
                     $data['card_number'] = (string)$sub->payment->creditCard->cardNumber;
@@ -208,7 +182,6 @@ class AuthorizeNet {
                 }
             }
             
-            // Profile info
             if (isset($sub->profile)) {
                 if (isset($sub->profile->customerProfileId)) {
                     $data['customer_profile_id'] = (string)$sub->profile->customerProfileId;
@@ -218,7 +191,6 @@ class AuthorizeNet {
                 }
             }
             
-            // Billing address
             if (isset($sub->billTo)) {
                 if (isset($sub->billTo->firstName)) {
                     $data['billing_first_name'] = (string)$sub->billTo->firstName;
@@ -248,9 +220,6 @@ class AuthorizeNet {
         }
     }
     
-    /**
-     * Check if API credentials are configured
-     */
     public function isConfigured() {
         return !empty($this->apiLoginId) && !empty($this->transactionKey);
     }
